@@ -1,21 +1,29 @@
-# Snapshots for Home Directories on BTRFS
+[update-readmes]   Mode: rewrite — migrating to template structure...
+# btrfs-home-directory-snapshots
 
-Snapshot support for home directories on [btrfs](https://en.wikipedia.org/wiki/Btrfs). Btrfs is a file system that is based on b-trees and copy-on-write (COW). It supports snapshots which are created instantly and with virtually no additional disk space. This `snapshot` script implements these snapshots for regular home directories and also for home directories encrypted with ecryptfs.
+[![Built with Ona](https://ona.com/build-with-ona.svg)](https://app.ona.com/#https://github.com/Interested-Deving-1896/btrfs-home-directory-snapshots)
 
-The `snapshot` script creates and deletes read-only snapshots of the home directory. These snapshots are stored either in the `~/.snapshots/` directory or a subdirectory like `hourly` or `monthly` of `~/.snapshots/`. Each snapshot contains all the files and directories in the home directory from the time the snapshot was taken. These read-only snapshots provide access to files that may have been modified or deleted since the snapshot was taken. Snapshots are not a replacement for backups; they do not protect against hardware failures. Unlike btrfs snapshots taken with [timeshift](https://github.com/teejee2008/timeshift), the purpose is not to later restore the system later. Home directory snapshots are mainly used to recover a set of files or directories that have since been changed or deleted.
+<!-- AI:start:what-it-does -->
+_Description pending._
+<!-- AI:end:what-it-does -->
 
-For these scripts to work, the `btrfs` filesystem must be used for home directories. Different Linux distributions differ in the file systems they install by default; many also support btrfs as an option. Fedora 33 already uses btrfs as the default file system. Ubuntu allows to select btrfs during installation.
+## Architecture
 
-Btrfs snapshots can only be created from btrfs subvolumes. In order for the
-`snapshot` command to work, the home directory must be a btrfs
-subvolume. Script `home2subvolume` converts home directories into subvolumes.
-Fedora 33 supports home directories in btrfs subvolumes right out of the
-box: The command `useradd --btrfs-subvolume-home ...` adds one for a new user.
+<!-- AI:start:architecture -->
+_Architecture documentation pending._
+<!-- AI:end:architecture -->
 
-The `snapshot` and `home2subvolume` scripts have been written for Ubuntu
-20.04 and also tested on Fedora 33. They will work on other Linux distributions.
+## Install
+
+<!-- Add installation instructions here. This section is yours — the AI will not modify it. -->
+
+```bash
+git clone https://github.com/Interested-Deving-1896/btrfs-home-directory-snapshots.git
+cd btrfs-home-directory-snapshots
+```
 
 ## Usage
+
 
 The first step is to convert one or more home directories into btrfs subvolumes. The `home2subvolume` script is called with one or more usernames and it performs this conversion.
 The `home2subvolume` script must be run as root and only when the home directory
@@ -28,107 +36,51 @@ $ sudo -i
 # cd /
 # adduser test
  ...
-## On Ubuntu create user with encrypted home as this:
-# apt-get install -y ecryptfs-utils
-# adduser --encrypt-home etest
- ...
-# On Fedora create user with encrypted home as this:
-# dnf install -y ecryptfs-utils
-# useradd -G ecryptfs etest
-# passwd etest # set password, it will be needed by next command
-# ecryptfs-migrate-home etest # enter password
-## login as etest right away, BEFORE NEXT REBOOT
-```
 
-We then turn these home directories of `test` and `etest` as well as root's home directory `/root` into btrfs subvolumes.
+## Configuration
 
-```
-# home2subvolume root test etest
-Turning /root into a btrfs subvolume...
-Directory /root converted to btrfs subvolume.
+<!-- Document configuration options here. This section is yours — the AI will not modify it. -->
 
-Turning /home/test into a btrfs subvolume...
-Directory /home/test converted to btrfs subvolume.
+## CI
 
-Turning /home/.ecryptfs/etest/.Private into a btrfs subvolume...
-Directory /home/.ecryptfs/etest/.Private converted to btrfs subvolume.
-```
-We list the subvolumes:
-```
-# btrfs subvolume list /
-ID 256 gen 13158 top level 5 path @
-ID 258 gen 13154 top level 5 path @home
-ID 820 gen 13152 top level 256 path root
-ID 821 gen 13153 top level 258 path @home/test
-ID 822 gen 13154 top level 258 path @home/.ecryptfs/etest/.Private
-```
+<!-- AI:start:ci -->
+_CI documentation pending._
+<!-- AI:end:ci -->
 
-Snapshots can be created in the home directories that have been converted to subvolumes.
+## Mirror chain
+
+<!-- AI:start:mirror-chain -->
+This repo is maintained in [`Interested-Deving-1896/btrfs-home-directory-snapshots`](https://github.com/Interested-Deving-1896/btrfs-home-directory-snapshots) and mirrored through:
 
 ```
-# snapshot
-Created snapshot /root/.snapshots/2020-11-26_20:48:14.
-```
-We can also give the snapshot a name.
-```
-# snapshot my_first_snapshot
-Created snapshot /root/.snapshots/my_first_snapshot.
+Interested-Deving-1896/btrfs-home-directory-snapshots  ──►  OpenOS-Project-OSP/btrfs-home-directory-snapshots  ──►  OpenOS-Project-Ecosystem-OOC/btrfs-home-directory-snapshots
 ```
 
-Snapshots are subvolumes and the list of subvolumes includes them:
-```
-# btrfs subvolume list /
-ID 256 gen 13158 top level 5 path @
-ID 258 gen 13154 top level 5 path @home
-ID 820 gen 13152 top level 256 path root
-ID 821 gen 13153 top level 258 path @home/test
-ID 822 gen 13154 top level 258 path @home/.ecryptfs/etest/.Private
-ID 823 gen 13168 top level 820 path @/root/.snapshots/2020-11-26_20:48:14
-ID 824 gen 13171 top level 820 path @/root/.snapshots/my_first_snapshot
-```
+Changes flow downstream automatically via the hourly mirror chain in
+[`fork-sync-all`](https://github.com/Interested-Deving-1896/fork-sync-all).
+Direct commits to OSP or OOC are detected and opened as PRs back to `Interested-Deving-1896`.
+<!-- AI:end:mirror-chain -->
 
-Snapshots can be deleted by calling `snapshot -d` or `snapshot --delete` and a list of the snapshots to be deleted:
-```
-# snapshot -d my_first_snapshot 2020-11-26_20:48:14
-Snapshot /root/.snapshots/my_first_snapshot deleted.
-Snapshot /root/.snapshots/2020-11-26_20:48:14 deleted.
-```
+## Contributors
 
-When we create snapshots for encrypted home directories the subvolume names are much less readable.
+<!-- AI:start:contributors -->
+_Contributors pending._
+<!-- AI:end:contributors -->
 
-```
-$ rlogin -l etest localhost
-  ...
-etest@server:~$ snapshot
-Created snapshot /home/etest/.snapshots/2020-11-26_20:59:07.
-```
+## Origins
 
-When we list the subvolumes after creating snapshots of encrypted home directories, there will be a name like this:
+<!-- AI:start:origins -->
+_Original project — no upstream fork._
+<!-- AI:end:origins -->
 
-```
-# btrfs subvolume list /
-ID 256 gen 13158 top level 5 path @
-ID 258 gen 13154 top level 5 path @home
-ID 820 gen 13152 top level 256 path root
-ID 821 gen 13153 top level 258 path @home/test
-ID 822 gen 13154 top level 258 path @home/.ecryptfs/etest/.Private
-ID 825 gen 13186 top level 822 path @home/.ecryptfs/etest/.Private/ECRYPTFS_FNEK_ENCRYPTED.FWZHHDIj65-YcEQ24AWIa.TUpMVwJSRXW4kjQoHVf3vtQVr3IS-UEIK70k--/ECRYPTFS_FNEK_ENCRYPTED.FXZHHDIj65-YcEQ24AWIa.TUpMVwJSRXW4kjFENwnx-2mB0VweDXI2xabtFDOdIi7qcyMxGF1AYXxa--
-```
+## Resources
 
-## Caveats
+<!-- AI:start:resources -->
+_No additional resource files found._
+<!-- AI:end:resources -->
 
-Btrfs allows subvolumes and snapshots to be created by normal users but only root is allowed to delete them. `snapshot` calls `sudo` when non-root users delete snapshots with `snapshot -d` or `snapshot --delete`. `sudo` will ask for the password. Users must to be allowed to invoke `sudo` to delete their snapshots. Example:
+## License
 
-```
-etest@server:~$ snapshot -d 2020-11-26_20:59:07
-[sudo] password for etest: 
-etest is not in the sudoers file.  This incident will be reported.
-```
-
-After adding etest to the `sudo` group, the snapshot can be deleted:
-
-```
-etest@server:~$ snapshot -d 2020-11-26_20:59:07
-[sudo] password for etest: 
-Snapshot /home/etest/.snapshots/2020-11-26_20:59:07 deleted.
-```
+<!-- AI:start:license -->
+[MIT](https://github.com/Interested-Deving-1896/btrfs-home-directory-snapshots/blob/main/LICENSE) © 2026 [Interested-Deving-1896](https://github.com/Interested-Deving-1896)
+<!-- AI:end:license -->
